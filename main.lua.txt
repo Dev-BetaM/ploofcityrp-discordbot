@@ -1,0 +1,176 @@
+import discord
+import keep_alive
+from discord.ext import commands
+import random
+keep_alive.keep_alive()
+
+{
+"scripts": {
+   "start": "node python"
+ }
+}
+
+bot = commands.Bot(command_prefix = ".", description = "Bot pour le serveur PloofCity RP")
+
+@bot.event
+async def on_ready():
+	await bot.change_presence(status=discord.Status.online, activity=discord.Activity(
+		type=discord.ActivityType.watching, name="le RP des joueurs"
+	))
+	print("Ready !")
+
+async def createMutedRole(ctx):
+    mutedRole = await ctx.guild.create_role(name = "Muted",
+                                            permissions = discord.Permissions(
+                                                send_messages = False,
+                                                speak = False),
+                                            reason = "Creation du role Muted pour mute des gens.")
+    for channel in ctx.guild.channels:
+        await channel.set_permissions(mutedRole, send_messages = False, speak = False)
+    return mutedRole
+
+async def getMutedRole(ctx):
+    roles = ctx.guild.roles
+    for role in roles:
+        if role.name == "Muted":
+            return role
+    
+    return await createMutedRole(ctx)
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def mute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
+    mutedRole = await getMutedRole(ctx)
+    await member.add_roles(mutedRole, reason = reason)
+    await ctx.send(f"{member.mention} a été mute !")
+    await ctx.message.delete()
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def unmute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
+    mutedRole = await getMutedRole(ctx)
+    await member.remove_roles(mutedRole, reason = reason)
+    await ctx.send(f"{member.mention} a été unmute !")
+    await ctx.message.delete()
+    
+
+@bot.event
+async def on_command_error(ctx, error):
+	if isinstance(error, commands.CommandNotFound):
+		await ctx.send("Mmmmmmh, j'ai bien l'impression que cette commande n'existe pas :/")
+
+	if isinstance(error, commands.MissingRequiredArgument):
+		await ctx.send("Il manque un argument.")
+	elif isinstance(error, commands.MissingPermissions):
+		await ctx.send("Vous n'avez pas les permissions pour faire cette commande.")
+	elif isinstance(error, commands.CheckFailure):
+		await ctx.send("Oups vous ne pouvez utilisez cette commande.")
+	if isinstance(error.original, discord.Forbidden):
+		await ctx.send("Oups, je n'ai pas les permissions nécéssaires pour faire cette commmande")
+
+
+
+@bot.command()
+async def bvn(ctx):
+	await ctx.send("**Bienvenue** \nHey, bienvenue sur notre serveur !")
+	await ctx.message.delete()
+
+@bot.command()
+async def regle(ctx):
+	await ctx.send("**Acceptez le règlement de PloofCity RP [FA] pour accéder à l'intégralité du serveur** \n\n**__Présentation__** \nNotre serveur est un serveur RP basé sur Los Santos, nous avons des bons scripts et plusieurs choses utile, comme : \n - le **/skin + id** qui doit être fait par un staff si vous voulez changer des choses de votre personnages \n - plusieurs jobs légaux/illégaux \n - des service hospitalier et policiers complet \nEt plein d'autres trucs ! \nAlors rejoins nous ! \n\n**__Règlement RP__** \nQuand vous accepterez ce message, merci de bien vouloir aller lire le règlement RP qui ce trouve dans le salons approprié. \n\n**__Décision__** \nSi vous accepter ce message, vous vous engager à être un bon membre du discord ! \n\n_Pour accepter le règlement du serveur veuillez interagir avec la réaction ci-dessous !_")
+	await ctx.message.delete()
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def m(ctx):
+	await ctx.send("**Maintenace** \nHey, le serveur est actuellement en maintenance, nous ne pouvons pas vous transmettre une date de réouverture mais nous vous préviendrons dès la fin de la maintenance ! \n<@&914499326649184266>")
+	await ctx.message.delete()
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def on(ctx):
+	await ctx.send("**Serveur ON** \nLe serveur est actuellement ON, pour te connecter -> <#914504003365265468> \n<@&914499326649184266>")
+	await ctx.message.delete()
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def off(ctx):
+	await ctx.send("**Serveur OFF** \nLe serveur est actuellement OFF, nous vous préviendrons pour la réouverture ! \n<@&914499326649184266>")
+	await ctx.message.delete()
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def pub(ctx):
+	await ctx.send("Salut à toi, n'hésite pas à nous aidez et allez voter pour notre serveur sur ces deux sites (laisse aussi un avis si tu veut !) : \n<https://meilleurs-serveurs.com/gta-v/ploofcity-rp?action=vote> \nhttps://top-serveurs.net/gta/vote/ploofcity-rp")
+	await ctx.message.delete()
+
+@bot.command()
+async def h(ctx):
+	await ctx.send("**Voici les commandes du serveur :** \n\n__Commandes de base__\n\n- .h : _envoi le menu d'aide_\n- .bvn : _envoi un message de bienvenue_\n- .m : _envoi un message de maintenance_\n- .on : _envoi un message que le serveur est ON_\n- .off : _envoi un message que le serveur est OFF_\n- .serverinfo : _donne les informations du serveur_\n\n__Commandes de modérations__\n\n- .clear + le nombre de message à supprimer : _supprime un nombre de message demandé_\n- .say + un message : _envoi un message avec le pseudo du bot_\n- .kick + la personne + la raison : _expulse une personne_\n- .ban + la personne + la raison : _banni une personne_\n- .unban + l'id de la personne : _deban une personne_\n- .dm + la personne : envoi un message privé avec le bot")
+	await ctx.message.delete()
+
+@bot.command()
+async def serverinfo(ctx):
+	server = ctx.guild
+	numberOfTextChannels = len(server.text_channels)
+	numberOfVoiceChannels = len(server.voice_channels)
+	numberOfPerson = server.member_count
+	serverName = server.name
+	message = f"Le serveur **{serverName}** contient **{numberOfPerson}** personnes. \nCe serveur possède **{numberOfTextChannels}** salons textuel et **{numberOfVoiceChannels}** salons vocaux."
+	await ctx.send(message)
+	await ctx.message.delete()
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def say(ctx, *texte):
+	await ctx.send(" ".join (texte))
+	await ctx.message.delete()
+
+@bot.command()
+@commands.has_permissions(ban_members = True)
+async def ban(ctx, user : discord.User, *reason):
+	reason = " ".join(reason)
+	await ctx.guild.ban(user, reason = reason)
+	await ctx.message.delete()
+	await ctx.send(f"{user} à été ban pour la raison suivante : {reason}")
+
+@bot.command()
+@commands.has_permissions(ban_members = True)
+async def unban(ctx, user : discord.User, *reason):
+	reason = " ".join(reason)
+	bannedUsers = await ctx.guild.bans()
+	for i in bannedUsers:
+			await ctx.guild.unban(i.user, reason = reason)
+			await ctx.message.delete()
+			await ctx.send(f"{user} à été unban")
+			return
+	await ctx.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
+
+
+@bot.command()
+@commands.has_permissions(kick_members = True)
+async def kick(ctx, user : discord.User, *reason):
+	reason = " ".join(reason)
+	await ctx.guild.kick(user, reason = reason)
+	await ctx.message.delete()
+	await ctx.send(f"{user} à été kick pour la raison suivante : {reason}")
+
+@bot.command()
+@commands.has_permissions(manage_messages = True)
+async def clear(ctx, nombre : int):
+	messages = await ctx.channel.history(limit = nombre + 1).flatten()
+	for message in messages:
+		await message.delete()
+	await ctx.send(f"J'ai supprimé **{nombre}** message")
+
+
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def dm(ctx, user: discord.User, *, message=None):
+    message = message
+    await user.send(message)
+    await ctx.message.delete()
+    await ctx.send(f"le message a été envoyer avec succès à {user}")
+    await ctx.send_mp
+
+bot.run(process.env.TOKEN)
